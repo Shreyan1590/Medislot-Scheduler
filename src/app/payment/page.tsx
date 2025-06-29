@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect } from 'react';
@@ -26,7 +27,7 @@ type PaymentFormData = z.infer<typeof paymentSchema>;
 
 export default function PaymentPage() {
   const router = useRouter();
-  const { selectedTest, selectedDoctor, appointmentDate, setPaymentDetails } = useBooking();
+  const { selectedTest, selectedDoctor, appointmentDate, setPaymentDetails, isLoggedIn } = useBooking();
 
   const form = useForm<PaymentFormData>({
     resolver: zodResolver(paymentSchema),
@@ -39,12 +40,14 @@ export default function PaymentPage() {
   });
 
   useEffect(() => {
-    if (!selectedTest || !selectedDoctor || !appointmentDate) {
+    if (!isLoggedIn) {
+      router.push('/login');
+    } else if (!selectedTest || !selectedDoctor || !appointmentDate) {
       router.push('/schedule');
     }
-  }, [selectedTest, selectedDoctor, appointmentDate, router]);
+  }, [isLoggedIn, selectedTest, selectedDoctor, appointmentDate, router]);
 
-  if (!selectedTest || !selectedDoctor || !appointmentDate) {
+  if (!isLoggedIn || !selectedTest || !selectedDoctor || !appointmentDate) {
     return null;
   }
 

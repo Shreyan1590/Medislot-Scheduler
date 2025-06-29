@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, type ElementType } from "react";
@@ -17,12 +18,20 @@ const testIcons: { [key: string]: ElementType } = {
 
 export default function TestSelectionPage() {
   const router = useRouter();
-  const { selectedTest, setTest, resetBooking } = useBooking();
+  const { isLoggedIn, selectedTest, setTest, resetBooking } = useBooking();
 
-  // Reset booking state when landing on the first page
   useEffect(() => {
-    resetBooking();
-  }, [resetBooking]);
+    if (!isLoggedIn) {
+      router.push('/login');
+    }
+  }, [isLoggedIn, router]);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      // Reset booking state when landing on the first page after login
+      resetBooking();
+    }
+  }, [isLoggedIn, resetBooking]);
 
   const handleSelectTest = (test: Test) => {
     setTest(test);
@@ -33,6 +42,10 @@ export default function TestSelectionPage() {
       router.push('/doctor-selection');
     }
   };
+  
+  if (!isLoggedIn) {
+    return null; // or a loading spinner while redirecting
+  }
 
   return (
     <BookingLayout

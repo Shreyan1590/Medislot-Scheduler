@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -19,14 +20,16 @@ const timeSlots = [
 
 export default function SchedulePage() {
   const router = useRouter();
-  const { selectedDoctor, appointmentDate, setAppointmentDate, selectedTest } = useBooking();
+  const { selectedDoctor, appointmentDate, setAppointmentDate, selectedTest, isLoggedIn } = useBooking();
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!selectedDoctor || !selectedTest) {
+    if (!isLoggedIn) {
+      router.push('/login');
+    } else if (!selectedDoctor || !selectedTest) {
       router.push('/doctor-selection');
     }
-  }, [selectedDoctor, selectedTest, router]);
+  }, [isLoggedIn, selectedDoctor, selectedTest, router]);
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
@@ -72,7 +75,7 @@ export default function SchedulePage() {
     setSelectedTime(format(suggested, "hh:mm a"));
   }
 
-  if (!selectedDoctor || !selectedTest) return null;
+  if (!isLoggedIn || !selectedDoctor || !selectedTest) return null;
 
   return (
     <BookingLayout

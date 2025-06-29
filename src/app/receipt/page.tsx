@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -12,18 +13,20 @@ import { format } from 'date-fns';
 
 export default function ReceiptPage() {
   const router = useRouter();
-  const { selectedTest, selectedDoctor, appointmentDate, resetBooking } = useBooking();
-  const [referenceId, setReferenceId] = useState<string | null>(null);
+  const { selectedTest, selectedDoctor, appointmentDate, resetBooking, isLoggedIn, patientName } = useBooking();
+  const [appointmentNumber, setAppointmentNumber] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!selectedTest || !selectedDoctor || !appointmentDate) {
+    if (!isLoggedIn) {
+        router.push('/login');
+    } else if (!selectedTest || !selectedDoctor || !appointmentDate) {
       router.push('/');
     }
-  }, [selectedTest, selectedDoctor, appointmentDate, router]);
+  }, [isLoggedIn, selectedTest, selectedDoctor, appointmentDate, router]);
 
   useEffect(() => {
     // Generate ID on client mount to avoid hydration mismatch
-    setReferenceId(Math.random().toString(36).substring(2, 11).toUpperCase());
+    setAppointmentNumber(Math.random().toString(36).substring(2, 11).toUpperCase());
   }, []);
 
   const handleNewBooking = () => {
@@ -31,7 +34,7 @@ export default function ReceiptPage() {
     router.push('/');
   };
 
-  if (!selectedTest || !selectedDoctor || !appointmentDate) {
+  if (!isLoggedIn || !selectedTest || !selectedDoctor || !appointmentDate) {
     return null;
   }
 
@@ -45,10 +48,14 @@ export default function ReceiptPage() {
         <CheckCircle className="w-16 h-16 text-accent mb-4" />
         <Card className="w-full max-w-2xl">
           <CardHeader>
-            <CardTitle>Booking Details</CardTitle>
-            <CardDescription>Reference ID: #{referenceId || '...'}</CardDescription>
+            <CardTitle>Booking Receipt</CardTitle>
+            <CardDescription>Appointment Number: #{appointmentNumber || '...'}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-left">
+             <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Patient Name</span>
+              <span className="font-semibold">{patientName}</span>
+            </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Test</span>
               <span className="font-semibold">{selectedTest.name}</span>
@@ -58,13 +65,18 @@ export default function ReceiptPage() {
               <span className="font-semibold">{selectedDoctor.name}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Date & Time</span>
+              <span className="text-muted-foreground">Consultation Date & Timing</span>
               <span className="font-semibold">{format(appointmentDate, 'EEEE, MMMM do, yyyy')} at {format(appointmentDate, 'h:mm a')}</span>
             </div>
             <Separator />
             <div className="flex justify-between items-center text-xl">
               <span className="text-muted-foreground">Amount Paid</span>
               <span className="font-bold text-primary">${selectedTest.price.toFixed(2)}</span>
+            </div>
+            <div className="mt-6 pt-4 border-t border-dashed">
+                <span className="text-muted-foreground text-sm">Computerized Signature</span>
+                <div className="font-serif italic text-lg text-right mt-2">{selectedDoctor.name}</div>
+                <div className="text-xs text-muted-foreground text-right">(Not a pen signature)</div>
             </div>
           </CardContent>
           <CardFooter>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useMemo } from 'react';
@@ -15,20 +16,22 @@ import Link from 'next/link';
 
 export default function DoctorSelectionPage() {
   const router = useRouter();
-  const { selectedTest, selectedDoctor, setDoctor } = useBooking();
+  const { selectedTest, selectedDoctor, setDoctor, isLoggedIn } = useBooking();
 
   useEffect(() => {
-    if (!selectedTest) {
+    if (!isLoggedIn) {
+      router.push('/login');
+    } else if (!selectedTest) {
       router.push('/');
     }
-  }, [selectedTest, router]);
+  }, [isLoggedIn, selectedTest, router]);
 
   const availableDoctors = useMemo(() => {
     if (!selectedTest) return [];
     return doctors.filter(doctor => doctor.specialties.includes(selectedTest.id));
   }, [selectedTest]);
 
-  if (!selectedTest) {
+  if (!isLoggedIn || !selectedTest) {
     return null; // or a loading spinner
   }
 
