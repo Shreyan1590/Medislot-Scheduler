@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { StepIndicator } from './StepIndicator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +13,7 @@ interface BookingLayoutProps {
 
 export function BookingLayout({ currentStep, title, description, children }: BookingLayoutProps) {
   return (
-    <div className="w-full max-w-6xl mx-auto">
+    <div className="w-full max-w-6xl mx-auto py-10 px-4">
       <StepIndicator currentStep={currentStep} />
       <Card className="mt-8 shadow-lg">
         <CardHeader>

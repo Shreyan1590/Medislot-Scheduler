@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
@@ -8,8 +9,8 @@ import { cn } from '@/lib/utils';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'MediSlot Scheduler',
-  description: 'Book your medical appointments with ease.',
+  title: 'DR Medlab',
+  description: 'Precision Diagnostics, Unmatched Care. Book your medical appointments with ease.',
 };
 
 export default function RootLayout({
@@ -26,7 +27,7 @@ export default function RootLayout({
       </head>
       <body className={cn('font-sans antialiased', inter.variable)}>
         <BookingProvider>
-          <main className="min-h-screen bg-background flex flex-col items-center py-10 px-4">
+          <main className="min-h-screen bg-background flex flex-col items-center">
             {children}
           </main>
           <Toaster />

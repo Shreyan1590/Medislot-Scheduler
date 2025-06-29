@@ -20,7 +20,7 @@ export default function ReceiptPage() {
     if (!isLoggedIn) {
         router.push('/login');
     } else if (!selectedTest || !selectedDoctor || !appointmentDate) {
-      router.push('/');
+      router.push('/booking');
     }
   }, [isLoggedIn, selectedTest, selectedDoctor, appointmentDate, router]);
 
@@ -31,7 +31,7 @@ export default function ReceiptPage() {
 
   const handleNewBooking = () => {
     resetBooking();
-    router.push('/');
+    router.push('/booking');
   };
 
   if (!isLoggedIn || !selectedTest || !selectedDoctor || !appointmentDate) {

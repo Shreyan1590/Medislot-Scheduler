@@ -22,7 +22,7 @@ export default function DoctorSelectionPage() {
     if (!isLoggedIn) {
       router.push('/login');
     } else if (!selectedTest) {
-      router.push('/');
+      router.push('/booking');
     }
   }, [isLoggedIn, selectedTest, router]);
 
@@ -42,7 +42,7 @@ export default function DoctorSelectionPage() {
   };
 
   const handleBack = () => {
-    router.push('/');
+    router.push('/booking');
   };
 
   return (
@@ -91,7 +91,7 @@ export default function DoctorSelectionPage() {
           <AlertTitle>No Doctors Available</AlertTitle>
           <AlertDescription>
             We're sorry, but there are no doctors available for this test. Please{' '}
-            <Link href="/" className="underline">select another test</Link>.
+            <Link href="/booking" className="underline">select another test</Link>.
           </AlertDescription>
         </Alert>
       )}

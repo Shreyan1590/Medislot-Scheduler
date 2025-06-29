@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Stethoscope } from 'lucide-react';
+import Link from 'next/link';
 
 const loginSchema = z.object({
   name: z.string().min(2, 'Please enter your full name'),
@@ -37,18 +38,19 @@ export default function LoginPage() {
     // In a real app, you'd authenticate here.
     // We'll just log the user in with their provided name.
     login(data.name);
-    router.push('/');
+    router.push('/booking');
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
-        <Card className="mt-8 shadow-lg">
+    <div className="w-full max-w-md mx-auto py-10 px-4">
+       <Link href="/" className="text-sm text-primary hover:underline mb-4 inline-block">&larr; Back to Home</Link>
+        <Card className="shadow-lg">
             <CardHeader className="text-center">
                 <div className="flex justify-center mb-4">
                     <Stethoscope className="w-12 h-12 text-primary" />
                 </div>
-                <CardTitle className="text-2xl font-bold">Welcome to Shreyan's Medlab</CardTitle>
-                <CardDescription>Please log in to book an appointment.</CardDescription>
+                <CardTitle className="text-2xl font-bold">Welcome to DR Medlab</CardTitle>
+                <CardDescription>Please log in or register to book an appointment.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
@@ -93,7 +95,7 @@ export default function LoginPage() {
                             </FormItem>
                         )}
                     />
-                    <Button type="submit" className="w-full" size="lg">Log In</Button>
+                    <Button type="submit" className="w-full" size="lg">Log In / Register</Button>
                 </form>
                 </Form>
             </CardContent>
