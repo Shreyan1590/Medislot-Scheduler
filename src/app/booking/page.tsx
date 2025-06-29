@@ -13,6 +13,7 @@ import { BookingLayout } from '@/components/BookingLayout';
 import { db } from '@/lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { useToast } from "@/hooks/use-toast";
+import { tests as mockTests } from '@/data/mock-data';
 
 const testIcons: { [key: string]: ElementType } = {
   blood: Droplets,
@@ -42,11 +43,17 @@ export default function TestSelectionPage() {
           try {
               const testsCollection = collection(db, 'tests');
               const testSnapshot = await getDocs(testsCollection);
-              const testsList = testSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Test));
+              let testsList = testSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Test));
+              
+              if (testsList.length === 0) {
+                console.warn("Firestore 'tests' collection is empty. Falling back to mock data.");
+                testsList = mockTests;
+              }
               setTests(testsList);
           } catch (error) {
-              console.error("Error fetching tests: ", error);
-              toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch medical tests. Make sure you have added data to your Firestore `tests` collection.' });
+              console.error("Error fetching tests from Firestore: ", error);
+              toast({ variant: 'destructive', title: 'Could not connect to database', description: 'Using sample test data instead.' });
+              setTests(mockTests);
           } finally {
               setIsLoading(false);
           }

@@ -16,6 +16,7 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Doctor } from '@/lib/types';
+import { doctors as mockDoctors } from '@/data/mock-data';
 
 export default function DoctorSelectionPage() {
   const router = useRouter();
@@ -36,11 +37,19 @@ export default function DoctorSelectionPage() {
                 const doctorsCollection = collection(db, 'doctors');
                 const q = query(doctorsCollection, where("specialties", "array-contains", selectedTest.id));
                 const doctorSnapshot = await getDocs(q);
-                const doctorsList = doctorSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Doctor));
+                let doctorsList = doctorSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Doctor));
+
+                if (doctorsList.length === 0) {
+                  console.warn("No doctors found in Firestore for this test, using mock data.");
+                  doctorsList = mockDoctors.filter(doctor => doctor.specialties.includes(selectedTest.id));
+                }
+
                 setAvailableDoctors(doctorsList);
             } catch (error) {
-                console.error("Error fetching doctors: ", error);
-                toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch doctors. Make sure you have added data to your Firestore `doctors` collection.' });
+                console.error("Error fetching doctors from Firestore: ", error);
+                toast({ variant: 'destructive', title: 'Could not connect to database', description: 'Using sample doctor data instead.' });
+                const filteredMockDoctors = mockDoctors.filter(doctor => doctor.specialties.includes(selectedTest.id));
+                setAvailableDoctors(filteredMockDoctors);
             } finally {
                 setIsLoading(false);
             }
