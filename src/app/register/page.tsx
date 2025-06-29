@@ -8,45 +8,48 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Stethoscope, Loader2 } from 'lucide-react';
+import { UserPlus, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { auth } from '@/lib/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
-const loginSchema = z.object({
+const registerSchema = z.object({
+  name: z.string().min(2, 'Please enter your full name'),
   email: z.string().email('Invalid email address').min(1, 'Email is required'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
-type LoginFormData = z.infer<typeof loginSchema>;
+type RegisterFormData = z.infer<typeof registerSchema>;
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
     defaultValues: {
+      name: '',
       email: '',
       password: '',
     },
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: RegisterFormData) => {
     setIsSubmitting(true);
     try {
-      await signInWithEmailAndPassword(auth, data.email, data.password);
-      toast({ title: 'Login Successful', description: "Welcome back!" });
+      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+      await updateProfile(userCredential.user, { displayName: data.name });
+      toast({ title: 'Account Created', description: "Welcome to DR Medlab! You can now book an appointment." });
       router.push('/booking');
     } catch (error: any) {
         let errorMessage = 'An unexpected error occurred. Please try again.';
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-            errorMessage = 'Invalid email or password. Please try again.';
+        if (error.code === 'auth/email-already-in-use') {
+            errorMessage = 'This email is already registered. Please log in instead.';
         }
-      toast({ variant: 'destructive', title: 'Login Failed', description: errorMessage });
+        toast({ variant: 'destructive', title: 'Registration Failed', description: errorMessage });
     } finally {
         setIsSubmitting(false);
     }
@@ -58,14 +61,27 @@ export default function LoginPage() {
         <Card className="shadow-lg">
             <CardHeader className="text-center">
                 <div className="flex justify-center mb-4">
-                    <Stethoscope className="w-12 h-12 text-primary" />
+                    <UserPlus className="w-12 h-12 text-primary" />
                 </div>
-                <CardTitle className="text-2xl font-bold">Log In to DR Medlab</CardTitle>
-                <CardDescription>Enter your credentials to access your account.</CardDescription>
+                <CardTitle className="text-2xl font-bold">Create an Account</CardTitle>
+                <CardDescription>Join DR Medlab to book appointments seamlessly.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Full Name</FormLabel>
+                            <FormControl>
+                                <Input placeholder="John Doe" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                     <FormField
                         control={form.control}
                         name="email"
@@ -94,14 +110,14 @@ export default function LoginPage() {
                     />
                     <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
                       {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Log In
+                      Register
                     </Button>
                 </form>
                 </Form>
-                 <div className="mt-4 text-center text-sm">
-                    Don't have an account?{' '}
-                    <Link href="/register" className="underline text-primary">
-                        Sign up
+                <div className="mt-4 text-center text-sm">
+                    Already have an account?{' '}
+                    <Link href="/login" className="underline text-primary">
+                        Log in
                     </Link>
                 </div>
             </CardContent>

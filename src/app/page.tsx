@@ -14,9 +14,14 @@ export default function LandingPage() {
             <TestTube className="w-8 h-8 text-primary" />
             <h1 className="text-2xl font-bold">DR Medlab</h1>
           </div>
-          <Button asChild>
-            <Link href="/login">Register / Log In</Link>
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button asChild variant="ghost">
+              <Link href="/login">Log In</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/register">Register</Link>
+            </Button>
+          </div>
         </header>
 
         <main>
@@ -28,7 +33,7 @@ export default function LandingPage() {
               DR Medlab offers state-of-the-art diagnostic services with a focus on accuracy, speed, and patient comfort. Book your appointments online with ease.
             </p>
             <Button asChild size="lg" className="mt-8">
-              <Link href="/login">Get Started</Link>
+              <Link href="/register">Get Started</Link>
             </Button>
             <div className="relative mt-12 w-full max-w-4xl mx-auto">
               <Image 
