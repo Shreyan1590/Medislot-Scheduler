@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +15,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookingLayout } from '@/components/BookingLayout';
 import { Separator } from '@/components/ui/separator';
+import { db } from '@/lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 const paymentSchema = z.object({
   cardName: z.string().min(2, 'Name is too short'),
@@ -27,7 +31,9 @@ type PaymentFormData = z.infer<typeof paymentSchema>;
 
 export default function PaymentPage() {
   const router = useRouter();
-  const { selectedTest, selectedDoctor, appointmentDate, setPaymentDetails, isLoggedIn } = useBooking();
+  const { user, selectedTest, selectedDoctor, appointmentDate, setPaymentDetails, isLoggedIn, setAppointmentId } = useBooking();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<PaymentFormData>({
     resolver: zodResolver(paymentSchema),
@@ -51,10 +57,43 @@ export default function PaymentPage() {
     return null;
   }
 
-  const onSubmit = (data: PaymentFormData) => {
+  const onSubmit = async (data: PaymentFormData) => {
+    if (!user) {
+        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to make a payment.' });
+        return;
+    }
+
+    setIsSubmitting(true);
     // Simulate payment processing
     setPaymentDetails(data);
-    router.push('/receipt');
+    
+    const appointmentId = Math.random().toString(36).substring(2, 11).toUpperCase();
+    setAppointmentId(appointmentId);
+
+    try {
+        const appointmentData = {
+            patientId: user.uid,
+            patientName: user.displayName,
+            testId: selectedTest.id,
+            testName: selectedTest.name,
+            doctorId: selectedDoctor.id,
+            doctorName: selectedDoctor.name,
+            appointmentDate: appointmentDate,
+            price: selectedTest.price,
+            status: 'confirmed',
+            createdAt: new Date(),
+        };
+
+        await setDoc(doc(db, "appointments", appointmentId), appointmentData);
+        
+        toast({ title: 'Payment Successful', description: 'Your appointment is confirmed.' });
+        router.push('/receipt');
+    } catch (error) {
+        console.error("Error saving appointment: ", error);
+        toast({ variant: 'destructive', title: 'Booking Failed', description: 'Could not save your appointment. Please try again.' });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   const handleBack = () => {
@@ -156,8 +195,9 @@ export default function PaymentPage() {
         </div>
       </div>
       <div className="flex justify-between mt-8">
-        <Button onClick={handleBack} variant="outline" size="lg">Back</Button>
-        <Button onClick={form.handleSubmit(onSubmit)} size="lg" type="submit">
+        <Button onClick={handleBack} variant="outline" size="lg" disabled={isSubmitting}>Back</Button>
+        <Button onClick={form.handleSubmit(onSubmit)} size="lg" type="submit" disabled={isSubmitting}>
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Pay & Confirm
         </Button>
       </div>

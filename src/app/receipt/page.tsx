@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useBooking } from '@/context/BookingContext';
 import { Button } from '@/components/ui/button';
@@ -13,29 +13,25 @@ import { format } from 'date-fns';
 
 export default function ReceiptPage() {
   const router = useRouter();
-  const { selectedTest, selectedDoctor, appointmentDate, resetBooking, isLoggedIn, patientName } = useBooking();
-  const [appointmentNumber, setAppointmentNumber] = useState<string | null>(null);
+  const { selectedTest, selectedDoctor, appointmentDate, resetBooking, isLoggedIn, patientName, appointmentId } = useBooking();
 
   useEffect(() => {
     if (!isLoggedIn) {
         router.push('/login');
-    } else if (!selectedTest || !selectedDoctor || !appointmentDate) {
+    } else if (!selectedTest || !selectedDoctor || !appointmentDate || !appointmentId) {
+      // Redirect if any crucial information is missing
       router.push('/booking');
     }
-  }, [isLoggedIn, selectedTest, selectedDoctor, appointmentDate, router]);
+  }, [isLoggedIn, selectedTest, selectedDoctor, appointmentDate, appointmentId, router]);
 
-  useEffect(() => {
-    // Generate ID on client mount to avoid hydration mismatch
-    setAppointmentNumber(Math.random().toString(36).substring(2, 11).toUpperCase());
-  }, []);
 
   const handleNewBooking = () => {
     resetBooking();
     router.push('/booking');
   };
 
-  if (!isLoggedIn || !selectedTest || !selectedDoctor || !appointmentDate) {
-    return null;
+  if (!isLoggedIn || !selectedTest || !selectedDoctor || !appointmentDate || !appointmentId) {
+    return null; // or a loading skeleton
   }
 
   return (
@@ -49,7 +45,7 @@ export default function ReceiptPage() {
         <Card className="w-full max-w-2xl">
           <CardHeader>
             <CardTitle>Booking Receipt</CardTitle>
-            <CardDescription>Appointment Number: #{appointmentNumber || '...'}</CardDescription>
+            <CardDescription>Appointment Number: #{appointmentId || '...'}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-left">
              <div className="flex justify-between items-center">

@@ -1,25 +1,30 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
+import { onAuthStateChanged, User, signOut as firebaseSignOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import type { Test, Doctor } from '@/lib/types';
+import { useRouter } from 'next/navigation';
 
 interface BookingState {
   isLoggedIn: boolean;
+  user: User | null;
   patientName: string | null;
   selectedTest: Test | null;
   selectedDoctor: Doctor | null;
   appointmentDate: Date | null;
-  paymentDetails: any | null; // Replace 'any' with a proper payment details type
+  paymentDetails: any | null; 
+  appointmentId: string | null;
 }
 
 interface BookingContextType extends BookingState {
-  login: (name: string) => void;
   logout: () => void;
   setTest: (test: Test) => void;
   setDoctor: (doctor: Doctor) => void;
   setAppointmentDate: (date: Date | null) => void;
   setPaymentDetails: (details: any) => void;
+  setAppointmentId: (id: string) => void;
   resetBooking: () => void;
 }
 
@@ -27,30 +32,43 @@ const BookingContext = createContext<BookingContextType | undefined>(undefined);
 
 const initialState: BookingState = {
   isLoggedIn: false,
+  user: null,
   patientName: null,
   selectedTest: null,
   selectedDoctor: null,
   appointmentDate: null,
   paymentDetails: null,
+  appointmentId: null,
 };
 
 export const BookingProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<BookingState>(initialState);
+  const router = useRouter();
 
-  const login = (name: string) => {
-    setState({
-      ...initialState, // Clear previous booking data on login
-      isLoggedIn: true,
-      patientName: name,
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setState(prevState => ({
+          ...prevState,
+          isLoggedIn: true,
+          user: user,
+          patientName: user.displayName || user.email,
+        }));
+      } else {
+        setState(initialState);
+      }
     });
-  };
 
-  const logout = useCallback(() => {
-    setState(initialState);
+    return () => unsubscribe();
   }, []);
 
+  const logout = useCallback(async () => {
+    await firebaseSignOut(auth);
+    router.push('/login');
+  }, [router]);
+
   const setTest = (test: Test) => {
-    setState(prevState => ({ ...prevState, selectedTest: test }));
+    setState(prevState => ({ ...prevState, selectedTest: test, selectedDoctor: null, appointmentDate: null, paymentDetails: null, appointmentId: null }));
   };
 
   const setDoctor = (doctor: Doctor) => {
@@ -65,6 +83,10 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     setState(prevState => ({ ...prevState, paymentDetails: details }));
   };
 
+  const setAppointmentId = (id: string) => {
+    setState(prevState => ({ ...prevState, appointmentId: id }));
+  };
+
   const resetBooking = useCallback(() => {
     // Resets booking details but keeps user logged in
     setState(prevState => ({
@@ -73,6 +95,7 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
       selectedDoctor: null,
       appointmentDate: null,
       paymentDetails: null,
+      appointmentId: null,
     }));
   }, []);
 
@@ -80,12 +103,12 @@ export const BookingProvider = ({ children }: { children: ReactNode }) => {
     <BookingContext.Provider
       value={{
         ...state,
-        login,
         logout,
         setTest,
         setDoctor,
         setAppointmentDate,
         setPaymentDetails,
+        setAppointmentId,
         resetBooking,
       }}
     >

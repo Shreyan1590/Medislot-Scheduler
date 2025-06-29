@@ -1,35 +1,53 @@
 
 "use client";
 
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useBooking } from '@/context/BookingContext';
-import { doctors } from '@/data/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { CheckCircle, Stethoscope, User } from 'lucide-react';
+import { CheckCircle, Stethoscope, User, Loader2 } from 'lucide-react';
 import { BookingLayout } from '@/components/BookingLayout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { Doctor } from '@/lib/types';
 
 export default function DoctorSelectionPage() {
   const router = useRouter();
   const { selectedTest, selectedDoctor, setDoctor, isLoggedIn } = useBooking();
+  const [availableDoctors, setAvailableDoctors] = useState<Doctor[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!isLoggedIn) {
       router.push('/login');
     } else if (!selectedTest) {
       router.push('/booking');
+    } else {
+        const fetchDoctors = async () => {
+            setIsLoading(true);
+            try {
+                const doctorsCollection = collection(db, 'doctors');
+                const q = query(doctorsCollection, where("specialties", "array-contains", selectedTest.id));
+                const doctorSnapshot = await getDocs(q);
+                const doctorsList = doctorSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Doctor));
+                setAvailableDoctors(doctorsList);
+            } catch (error) {
+                console.error("Error fetching doctors: ", error);
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch doctors. Make sure you have added data to your Firestore `doctors` collection.' });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchDoctors();
     }
-  }, [isLoggedIn, selectedTest, router]);
-
-  const availableDoctors = useMemo(() => {
-    if (!selectedTest) return [];
-    return doctors.filter(doctor => doctor.specialties.includes(selectedTest.id));
-  }, [selectedTest]);
+  }, [isLoggedIn, selectedTest, router, toast]);
 
   if (!isLoggedIn || !selectedTest) {
     return null; // or a loading spinner
@@ -44,6 +62,21 @@ export default function DoctorSelectionPage() {
   const handleBack = () => {
     router.push('/booking');
   };
+  
+  if (isLoading) {
+    return (
+        <BookingLayout
+            currentStep={2}
+            title={`Select a Doctor for ${selectedTest.name}`}
+            description="Our expert physicians are here to help."
+        >
+            <div className="flex justify-center items-center h-64">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                 <p className="ml-4">Finding available doctors...</p>
+            </div>
+        </BookingLayout>
+    );
+  }
 
   return (
     <BookingLayout

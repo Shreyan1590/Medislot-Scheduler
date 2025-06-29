@@ -1,16 +1,18 @@
 
 "use client";
 
-import { useEffect, type ElementType } from "react";
+import React, { useEffect, useState, type ElementType } from "react";
 import { useRouter } from 'next/navigation';
 import { useBooking } from '@/context/BookingContext';
-import { tests } from '@/data/mock-data';
 import type { Test } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, FlaskConical } from 'lucide-react';
+import { CheckCircle, FlaskConical, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BookingLayout } from '@/components/BookingLayout';
+import { db } from '@/lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { useToast } from "@/hooks/use-toast";
 
 const testIcons: { [key: string]: ElementType } = {
   default: FlaskConical,
@@ -19,19 +21,32 @@ const testIcons: { [key: string]: ElementType } = {
 export default function TestSelectionPage() {
   const router = useRouter();
   const { isLoggedIn, selectedTest, setTest, resetBooking } = useBooking();
+  const [tests, setTests] = useState<Test[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!isLoggedIn) {
       router.push('/login');
+    } else {
+      resetBooking(); // Reset previous booking state when starting a new one
+      const fetchTests = async () => {
+          setIsLoading(true);
+          try {
+              const testsCollection = collection(db, 'tests');
+              const testSnapshot = await getDocs(testsCollection);
+              const testsList = testSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Test));
+              setTests(testsList);
+          } catch (error) {
+              console.error("Error fetching tests: ", error);
+              toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch medical tests. Make sure you have added data to your Firestore `tests` collection.' });
+          } finally {
+              setIsLoading(false);
+          }
+      };
+      fetchTests();
     }
-  }, [isLoggedIn, router]);
-
-  useEffect(() => {
-    if (isLoggedIn) {
-      // Reset booking state when landing on the first page after login
-      resetBooking();
-    }
-  }, [isLoggedIn, resetBooking]);
+  }, [isLoggedIn, router, resetBooking, toast]);
 
   const handleSelectTest = (test: Test) => {
     setTest(test);
@@ -45,6 +60,21 @@ export default function TestSelectionPage() {
   
   if (!isLoggedIn) {
     return null; // or a loading spinner while redirecting
+  }
+
+  if (isLoading) {
+    return (
+        <BookingLayout
+            currentStep={1}
+            title="Select a Medical Test"
+            description="Choose from our available tests to get started."
+        >
+            <div className="flex justify-center items-center h-64">
+                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                <p className="ml-4">Loading tests...</p>
+            </div>
+        </BookingLayout>
+    );
   }
 
   return (

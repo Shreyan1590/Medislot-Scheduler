@@ -5,13 +5,16 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
-import { useBooking } from '@/context/BookingContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Stethoscope } from 'lucide-react';
+import { Stethoscope, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { auth } from '@/lib/firebase';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 const loginSchema = z.object({
   name: z.string().min(2, 'Please enter your full name'),
@@ -23,7 +26,8 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useBooking();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -34,11 +38,31 @@ export default function LoginPage() {
     },
   });
 
-  const onSubmit = (data: LoginFormData) => {
-    // In a real app, you'd authenticate here.
-    // We'll just log the user in with their provided name.
-    login(data.name);
-    router.push('/booking');
+  const onSubmit = async (data: LoginFormData) => {
+    setIsSubmitting(true);
+    try {
+      // Try to sign in first
+      await signInWithEmailAndPassword(auth, data.email, data.password);
+      toast({ title: 'Login Successful', description: "Welcome back!" });
+      router.push('/booking');
+    } catch (error: any) {
+      if (error.code === 'auth/user-not-found') {
+        // If user not found, create a new account
+        try {
+          const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+          await updateProfile(userCredential.user, { displayName: data.name });
+          toast({ title: 'Account Created', description: "Welcome to DR Medlab!" });
+          router.push('/booking');
+        } catch (creationError: any) {
+          toast({ variant: 'destructive', title: 'Registration Failed', description: creationError.message });
+        }
+      } else {
+        // Handle other errors like wrong password
+        toast({ variant: 'destructive', title: 'Login Failed', description: 'Incorrect password or other error. Please try again.' });
+      }
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   return (
@@ -64,7 +88,7 @@ export default function LoginPage() {
                             <FormControl>
                                 <Input placeholder="John Doe" {...field} />
                             </FormControl>
-                            <FormDescription>This will be used on your receipt.</FormDescription>
+                            <FormDescription>For new registrations, this will be your display name.</FormDescription>
                             <FormMessage />
                             </FormItem>
                         )}
@@ -95,7 +119,10 @@ export default function LoginPage() {
                             </FormItem>
                         )}
                     />
-                    <Button type="submit" className="w-full" size="lg">Log In / Register</Button>
+                    <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Log In / Register
+                    </Button>
                 </form>
                 </Form>
             </CardContent>
