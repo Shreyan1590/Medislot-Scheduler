@@ -1,4 +1,4 @@
-# **App Name**: MediSlot Scheduler
+# **App Name**: DR Medlab
 
 ## Core Features:
 
