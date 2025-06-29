@@ -7,7 +7,7 @@ import { useBooking } from '@/context/BookingContext';
 import type { Test } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, FlaskConical, Loader2 } from 'lucide-react';
+import { CheckCircle, FlaskConical, Loader2, HeartPulse, Bone, Microscope, Dna, Droplets, Activity, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BookingLayout } from '@/components/BookingLayout';
 import { db } from '@/lib/firebase';
@@ -15,6 +15,13 @@ import { collection, getDocs } from 'firebase/firestore';
 import { useToast } from "@/hooks/use-toast";
 
 const testIcons: { [key: string]: ElementType } = {
+  blood: Droplets,
+  allergy: Shield,
+  xray: Bone,
+  heart: HeartPulse,
+  genetic: Dna,
+  microscope: Microscope,
+  activity: Activity,
   default: FlaskConical,
 };
 

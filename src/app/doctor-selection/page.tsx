@@ -67,7 +67,7 @@ export default function DoctorSelectionPage() {
     return (
         <BookingLayout
             currentStep={2}
-            title={`Select a Doctor for ${selectedTest.name}`}
+            title={`Select a Doctor for ${selectedTest?.name}`}
             description="Our expert physicians are here to help."
         >
             <div className="flex justify-center items-center h-64">
@@ -81,7 +81,7 @@ export default function DoctorSelectionPage() {
   return (
     <BookingLayout
       currentStep={2}
-      title={`Select a Doctor for ${selectedTest.name}`}
+      title={`Select a Doctor for ${selectedTest?.name}`}
       description="Our expert physicians are here to help."
     >
       {availableDoctors.length > 0 ? (
@@ -112,7 +112,7 @@ export default function DoctorSelectionPage() {
               <CardContent>
                 <p className="text-muted-foreground flex items-center gap-2">
                   <Stethoscope className="w-4 h-4" />
-                  <span>{selectedTest.name} Specialist</span>
+                  <span>{selectedTest?.name} Specialist</span>
                 </p>
               </CardContent>
             </Card>
