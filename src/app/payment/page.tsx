@@ -17,7 +17,7 @@ import { Separator } from '@/components/ui/separator';
 
 const paymentSchema = z.object({
   cardName: z.string().min(2, 'Name is too short'),
-  cardNumber: z.string().refine((val) => /^\d{16}$/.test(val), 'Invalid card number'),
+  cardNumber: z.string().refine((val) => /^\d{16}$/.test(val.replace(/\s/g, '')), 'Card number must be 16 digits.'),
   expiryDate: z.string().refine((val) => /^(0[1-9]|1[0-2])\/\d{2}$/.test(val), 'Invalid format (MM/YY)'),
   cvc: z.string().refine((val) => /^\d{3,4}$/.test(val), 'Invalid CVC'),
 });
