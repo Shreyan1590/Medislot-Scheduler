@@ -1,0 +1,32 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read the list of tests and doctors if they are logged in.
+    // Writing is disallowed for clients to protect data integrity.
+    match /tests/{testId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /doctors/{doctorId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Rules for the appointments collection
+    match /appointments/{appointmentId} {
+      // A user can create an appointment for themselves.
+      // The patientId in the new document must match their own user ID.
+      allow create: if request.auth != null && request.resource.data.patientId == request.auth.uid;
+
+      // A user can only read their own appointments.
+      allow read: if request.auth != null && resource.data.patientId == request.auth.uid;
+
+      // Users cannot update or delete their appointments directly through the client.
+      // This protects the integrity of the appointment records.
+      allow update, delete: if false;
+    }
+  }
+}
